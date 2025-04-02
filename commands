@@ -1,0 +1,5 @@
+commands to run 
+1. npx hardhat node (univesally outside)
+2. npx hardhat run scripts/deploy.ts --network localhost
+3.npx ts-node src/index.ts (in b/e)
+4.npm run dev (in f/e)
