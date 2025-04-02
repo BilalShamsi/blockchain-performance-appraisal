@@ -3,25 +3,24 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index.js",
+    "test": "npx hardhat test"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "ethers": "^6.13.5",
     "express": "^4.21.2",
-    "web3": "^4.16.0"
+    "web3": "^4.16.0",
+    "hardhat": "^2.22.19",
+    "solc": "^0.8.21",
+    "chai": "^4.3.7"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.1",
     "@types/node": "^22.13.14",
-    "hardhat": "^2.22.19",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.2"
   }
