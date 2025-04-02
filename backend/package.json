@@ -1,20 +1,21 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "index.ts",
   "scripts": {
-    "start": "node index.js",
+    "start": "node index.ts",
     "test": "npx hardhat test"
   },
   "dependencies": {
+    "chai": "^4.3.7",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "ethers": "^6.13.5",
     "express": "^4.21.2",
-    "web3": "^4.16.0",
     "hardhat": "^2.22.19",
+    "package.json": "^0.0.0",
     "solc": "^0.8.21",
-    "chai": "^4.3.7"
+    "web3": "^4.16.0"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
@@ -22,6 +23,7 @@
     "@types/express": "^5.0.1",
     "@types/node": "^22.13.14",
     "ts-node": "^10.9.2",
-    "typescript": "^5.8.2"
+    "typescript": "^5.8.2",
+    "vite": "^6.2.4"
   }
 }

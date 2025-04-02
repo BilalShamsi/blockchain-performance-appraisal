@@ -9,33 +9,54 @@ contract PerformanceAppraisal {
         address ratedBy;
     }
 
-    mapping(uint => Employee) public employees;
+    struct Transaction {
+        uint id;
+        uint newScore;
+        address ratedBy;
+        uint256 timestamp;
+    }
+
+    Employee[] public employees;
+    Transaction[] public transactions;
     uint public employeeCount;
 
     event EmployeeAdded(uint indexed id, string name, uint score);
-    event EmployeeRated(uint indexed id, uint newScore, address ratedBy);
+    event RatingSubmitted(uint indexed id, uint newScore, address ratedBy, uint256 timestamp);
 
-    // Function to add a new employee
-    function addEmployee(string memory _name, uint _score) public {
-        require(_score <= 100, "Score must be between 0 and 100");
-        employees[employeeCount] = Employee(employeeCount, _name, _score, msg.sender);
-        emit EmployeeAdded(employeeCount, _name, _score);
+    // ✅ Add an employee
+    function addEmployee(string memory _name) public {
+        employees.push(Employee(employeeCount, _name, 0, msg.sender));
+        emit EmployeeAdded(employeeCount, _name, 0);
         employeeCount++;
     }
 
-    // Function to rate an employee (update score)
+    // ✅ Rate an employee (now updates transactions too)
     function rateEmployee(uint _id, uint _newScore) public {
-        require(_id < employeeCount, "Employee does not exist");
+        require(_id < employees.length, "Employee does not exist");
         require(_newScore <= 100, "Score must be between 0 and 100");
+
         employees[_id].score = _newScore;
         employees[_id].ratedBy = msg.sender;
-        emit EmployeeRated(_id, _newScore, msg.sender);
+        
+        transactions.push(Transaction(_id, _newScore, msg.sender, block.timestamp));
+
+        emit RatingSubmitted(_id, _newScore, msg.sender, block.timestamp);
     }
 
-    // Function to get employee details
+    // ✅ Get employee details by ID
     function getEmployee(uint _id) public view returns (string memory, uint, address) {
-        require(_id < employeeCount, "Employee does not exist");
+        require(_id < employees.length, "Employee does not exist");
         Employee memory emp = employees[_id];
         return (emp.name, emp.score, emp.ratedBy);
+    }
+
+    // ✅ Get total number of employees
+    function getEmployeeCount() public view returns (uint) {
+        return employeeCount;
+    }
+
+    // ✅ Get total transaction count
+    function transactionCount() public view returns (uint) {
+        return transactions.length;
     }
 }

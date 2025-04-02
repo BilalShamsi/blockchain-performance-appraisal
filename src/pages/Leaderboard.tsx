@@ -1,33 +1,68 @@
-import React from 'react';
-import { Trophy, TrendingUp, TrendingDown } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { Trophy, TrendingUp, TrendingDown } from "lucide-react";
+import { ethers } from "ethers";
+import contractABI from "../abi/PerformanceAppraisal.json";
+
+const fetchContractAddress = async () => {
+  try {
+    const response = await fetch("/contractAddress.json");
+    const data = await response.json();
+    return data.contractAddress;
+  } catch (error) {
+    console.error("Error fetching contract address:", error);
+    return null;
+  }
+};
 
 export default function Leaderboard() {
-  const topPerformers = [
-    {
-      id: 1,
-      name: 'Alice Johnson',
-      department: 'Engineering',
-      rating: 4.9,
-      change: 'up',
-      reviews: 45,
-    },
-    {
-      id: 2,
-      name: 'Bob Smith',
-      department: 'Design',
-      rating: 4.8,
-      change: 'down',
-      reviews: 38,
-    },
-    {
-      id: 3,
-      name: 'Carol Williams',
-      department: 'Product',
-      rating: 4.7,
-      change: 'up',
-      reviews: 42,
-    },
-  ];
+  const [topPerformers, setTopPerformers] = useState([]);
+
+  useEffect(() => {
+    const fetchLeaderboard = async () => {
+      const address = await fetchContractAddress();
+      if (!address) return;
+
+      if (!window.ethereum) {
+        alert("MetaMask not detected!");
+        return;
+      }
+
+      try {
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const contract = new ethers.Contract(address, contractABI.abi, provider);
+
+        const count = await contract.getEmployeeCount(); // Ensure function exists in contract
+        let employees = [];
+
+        for (let i = 0; i < count; i++) {
+          const [id, name, totalScore, ratingCount] = await contract.getEmployee(i);
+
+          const avgRating = ratingCount > 0 ? Number(totalScore) / Number(ratingCount) : 0;
+
+          employees.push({
+            id: Number(id),
+            name,
+            department: "N/A",
+            rating: isNaN(avgRating) ? 0 : avgRating.toFixed(1), // Prevent NaN issue
+            reviews: Number(ratingCount),
+          });
+        }
+
+        employees.sort((a, b) => b.rating - a.rating);
+
+        const rankedEmployees = employees.map((emp, index) => ({
+          ...emp,
+          change: index < employees.length / 2 ? "up" : "down",
+        }));
+
+        setTopPerformers(rankedEmployees);
+      } catch (error) {
+        console.error("Error fetching leaderboard:", error);
+      }
+    };
+
+    fetchLeaderboard();
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -46,70 +81,22 @@ export default function Leaderboard() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Rank
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Name
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Department
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Rating
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Reviews
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Trend
-                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rank</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rating</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reviews</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trend</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {topPerformers.map((person, index) => (
                 <tr key={person.id}>
+                  <td className="px-6 py-4 whitespace-nowrap">#{index + 1}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{person.name}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{person.rating}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{person.reviews}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">#{index + 1}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
-                      {person.name}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{person.department}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{person.rating}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{person.reviews}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {person.change === 'up' ? (
-                      <TrendingUp className="h-5 w-5 text-green-500" />
-                    ) : (
-                      <TrendingDown className="h-5 w-5 text-red-500" />
-                    )}
+                    {person.change === "up" ? <TrendingUp className="h-5 w-5 text-green-500" /> : <TrendingDown className="h-5 w-5 text-red-500" />}
                   </td>
                 </tr>
               ))}

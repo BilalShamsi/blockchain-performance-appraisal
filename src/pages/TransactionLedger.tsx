@@ -1,25 +1,56 @@
-import React from 'react';
-import { Clock, User, MessageSquare } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { Clock, User } from "lucide-react";
+import { ethers } from "ethers";
+import contractABI from "../abi/PerformanceAppraisal.json";
+
+const fetchContractAddress = async () => {
+  try {
+    const response = await fetch("/contractAddress.json");
+    const data = await response.json();
+    return data.contractAddress;
+  } catch (error) {
+    console.error("Error fetching contract address:", error);
+    return null;
+  }
+};
 
 export default function TransactionLedger() {
-  const transactions = [
-    {
-      id: '0x1234...5678',
-      timestamp: '2024-03-15 14:30:00',
-      from: 'Anonymous',
-      to: 'Alice Johnson',
-      rating: 4.5,
-      comment: 'Excellent leadership on the recent project launch',
-    },
-    {
-      id: '0x8765...4321',
-      timestamp: '2024-03-14 16:45:00',
-      from: 'Anonymous',
-      to: 'Bob Smith',
-      rating: 4.8,
-      comment: 'Outstanding technical contributions',
-    },
-  ];
+  const [transactions, setTransactions] = useState([]);
+
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      const address = await fetchContractAddress();
+      if (!address) return;
+
+      if (!window.ethereum) {
+        alert("MetaMask not detected!");
+        return;
+      }
+
+      try {
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const contract = new ethers.Contract(address, contractABI.abi, provider);
+
+        // 🔹 Fetch past "EmployeeRated" events
+        const filter = contract.filters.EmployeeRated();
+        const events = await contract.queryFilter(filter);
+
+        let txs = events.map((event) => ({
+          id: event.transactionHash, // Unique TX Hash
+          timestamp: event.blockNumber ? new Date(event.blockNumber * 1000).toLocaleString() : "N/A",
+          employeeId: event.args.id.toNumber(),
+          ratedBy: event.args.ratedBy,
+          newScore: event.args.newScore.toNumber(),
+        }));
+
+        setTransactions(txs.reverse());
+      } catch (error) {
+        console.error("Error fetching transactions:", error);
+      }
+    };
+
+    fetchTransactions();
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -27,8 +58,8 @@ export default function TransactionLedger() {
 
       <div className="bg-white shadow overflow-hidden sm:rounded-md">
         <ul className="divide-y divide-gray-200">
-          {transactions.map((transaction) => (
-            <li key={transaction.id}>
+          {transactions.map((transaction, index) => (
+            <li key={transaction.id || index}>
               <div className="px-4 py-4 sm:px-6">
                 <div className="flex items-center justify-between">
                   <div className="text-sm font-medium text-indigo-600 truncate">
@@ -36,7 +67,7 @@ export default function TransactionLedger() {
                   </div>
                   <div className="ml-2 flex-shrink-0 flex">
                     <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                      Rating: {transaction.rating}
+                      New Score: {transaction.newScore}
                     </span>
                   </div>
                 </div>
@@ -48,13 +79,12 @@ export default function TransactionLedger() {
                     </div>
                     <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0 sm:ml-6">
                       <User className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" />
-                      To: {transaction.to}
+                      Employee ID: {transaction.employeeId}
                     </div>
                   </div>
                 </div>
                 <div className="mt-2 flex items-center text-sm text-gray-500">
-                  <MessageSquare className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" />
-                  {transaction.comment}
+                  Rated By: {transaction.ratedBy}
                 </div>
               </div>
             </li>

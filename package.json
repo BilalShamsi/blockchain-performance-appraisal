@@ -11,15 +11,15 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,md}\""
   },
   "dependencies": {
+    "@rainbow-me/rainbowkit": "^1.2.0",
+    "@web3modal/core": "latest",
+    "@web3modal/ethers": "latest",
+    "@web3modal/react": "^2.7.1",
     "ethers": "^6.13.5",
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^6.22.3",
-    "@web3modal/react": "^3.10.0",
-    "@web3modal/ethers": "^2.6.0",
-    "@web3modal/core": "^3.10.0",
-    "@rainbow-me/rainbowkit": "^1.2.0"
+    "react-router-dom": "^6.22.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",
