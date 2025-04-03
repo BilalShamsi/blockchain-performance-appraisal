@@ -1,18 +1,7 @@
-import React, { useState, useEffect } from "react";
-import { Clock, User } from "lucide-react";
+import React, { useEffect, useState } from "react";
 import { ethers } from "ethers";
 import contractABI from "../abi/PerformanceAppraisal.json";
-
-const fetchContractAddress = async () => {
-  try {
-    const response = await fetch("/contractAddress.json");
-    const data = await response.json();
-    return data.contractAddress;
-  } catch (error) {
-    console.error("Error fetching contract address:", error);
-    return null;
-  }
-};
+import fetchContractAddress from "../utils/fetchContractAddress";
 
 export default function TransactionLedger() {
   const [transactions, setTransactions] = useState([]);
@@ -31,16 +20,15 @@ export default function TransactionLedger() {
         const provider = new ethers.BrowserProvider(window.ethereum);
         const contract = new ethers.Contract(address, contractABI.abi, provider);
 
-        // 🔹 Fetch past "EmployeeRated" events
         const filter = contract.filters.EmployeeRated();
         const events = await contract.queryFilter(filter);
 
         let txs = events.map((event) => ({
-          id: event.transactionHash, // Unique TX Hash
+          id: event.transactionHash,
           timestamp: event.blockNumber ? new Date(event.blockNumber * 1000).toLocaleString() : "N/A",
-          employeeId: event.args.id.toNumber(),
+          employeeId: Number(event.args.id),
           ratedBy: event.args.ratedBy,
-          newScore: event.args.newScore.toNumber(),
+          newScore: Number(event.args.newScore),
         }));
 
         setTransactions(txs.reverse());
@@ -53,44 +41,15 @@ export default function TransactionLedger() {
   }, []);
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-gray-900">Transaction Ledger</h1>
-
-      <div className="bg-white shadow overflow-hidden sm:rounded-md">
-        <ul className="divide-y divide-gray-200">
-          {transactions.map((transaction, index) => (
-            <li key={transaction.id || index}>
-              <div className="px-4 py-4 sm:px-6">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm font-medium text-indigo-600 truncate">
-                    Transaction: {transaction.id}
-                  </div>
-                  <div className="ml-2 flex-shrink-0 flex">
-                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                      New Score: {transaction.newScore}
-                    </span>
-                  </div>
-                </div>
-                <div className="mt-2 sm:flex sm:justify-between">
-                  <div className="sm:flex">
-                    <div className="flex items-center text-sm text-gray-500">
-                      <Clock className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" />
-                      {transaction.timestamp}
-                    </div>
-                    <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0 sm:ml-6">
-                      <User className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" />
-                      Employee ID: {transaction.employeeId}
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-2 flex items-center text-sm text-gray-500">
-                  Rated By: {transaction.ratedBy}
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
+    <div className="p-6">
+      <h1 className="text-2xl font-semibold">Transaction Ledger</h1>
+      <ul>
+        {transactions.map((tx) => (
+          <li key={tx.id}>
+            Employee {tx.employeeId} rated by {tx.ratedBy}: {tx.newScore} ⭐
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
